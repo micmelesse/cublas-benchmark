@@ -10,9 +10,10 @@
 //
 // which means, m=10 k=20 n=30, transpose matrix A but not B.
 
-#include <cublas_v2.h>
+#include "cxxopts.hpp"
 #include <cassert>
 #include <cstdio>
+#include <cublas_v2.h>
 
 // A simple GPU Timer taken from CUB
 struct GpuTimer {
@@ -222,21 +223,42 @@ void RunTest(int m, int k, int n, int transa, int transb) {
 }
 
 int main(int argc, char *argv[]) {
-  int m, k, n, ta, tb;
-  if (argc < 6) {
-    // m, k, n, ta, tb
-    m = 20;
-    k = 20000;
-    n = 200;
-    ta = 0;
-    tb = 1;
-  } else {
-    m = atoi(argv[1]);
-    k = atoi(argv[2]);
-    n = atoi(argv[3]);
-    ta = atoi(argv[4]);
-    tb = atoi(argv[5]);
-  }
-  RunTest(m, k, n, ta, tb);
+
+  cxxopts::Options options("cublas_bench", "Benchmark Cublas");
+  auto opp_adder = options.add_options();
+  opp_adder("f", "f", cxxopts::value<std::string>());
+  opp_adder("r", "r", cxxopts::value<std::string>());
+  opp_adder("transposeA", "transposeA", cxxopts::value<std::string>());
+  opp_adder("transposeB", "transposeB", cxxopts::value<std::string>());
+  opp_adder("m", "M", cxxopts::value<int>());
+  opp_adder("n", "N", cxxopts::value<int>());
+  opp_adder("k", "K", cxxopts::value<int>());
+  opp_adder("alpha", "alpha", cxxopts::value<float>());
+  opp_adder("lda", "lda", cxxopts::value<int>());
+  opp_adder("ldb", "ldb", cxxopts::value<int>());
+  opp_adder("beta", "beta", cxxopts::value<float>());
+  opp_adder("ldc", "ldc", cxxopts::value<int>());
+
+  auto result = options.parse(argc, argv);
+
+  std::string f = result["f"].as<std::string>();
+  std::string r = result["r"].as<std::string>();
+  std::string transposeA_str = result["transposeA"].as<std::string>();
+  int transposeA = (transposeA_str == "T" ? 1 : 0);
+  std::string transposeB_str = result["transposeB"].as<std::string>();
+  int transposeB = (transposeB_str == "T" ? 1 : 0);
+  int m = result["m"].as<int>();
+  int n = result["n"].as<int>();
+  int k = result["k"].as<int>();
+  float alpha = result["alpha"].as<float>();
+  int lda = result["lda"].as<int>();
+  int ldb = result["ldc"].as<int>();
+  float beta = result["beta"].as<float>();
+  int ldc = result["ldc"].as<int>();
+
+  std::cout << f << "," << r << "," << transposeA << "," << transposeB << ","
+            << m << "," << n << "," << k << "," << alpha << "," << lda << ","
+            << ldb << "," << beta << "," << ldc << std::endl;
+  RunTest(m, k, n, transposeA, transposeB);
   return 0;
 }
