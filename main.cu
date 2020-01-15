@@ -75,8 +75,10 @@ void RunTest(int m, int k, int n, int transa, int transb) {
       reinterpret_cast<float *>(malloc(A_rows * A_cols * sizeof(float)));
   float *host_B =
       reinterpret_cast<float *>(malloc(B_rows * B_cols * sizeof(float)));
-  for (int i = 0; i < A_rows * A_cols; i++) host_A[i] = i % 100;
-  for (int i = 0; i < B_rows * B_cols; i++) host_B[i] = i % 100;
+  for (int i = 0; i < A_rows * A_cols; i++)
+    host_A[i] = i % 100;
+  for (int i = 0; i < B_rows * B_cols; i++)
+    host_B[i] = i % 100;
 
   float *device_A_float, *device_B_float, *device_C_float;
   cudaMalloc(&device_A_float, A_rows * A_cols * sizeof(float));
@@ -138,10 +140,9 @@ void RunTest(int m, int k, int n, int transa, int transb) {
     if (result_valid) {
       elapsed_millis = gpu_timer.ElapsedMillis() / num_iter;
       throughput = 1.0f / elapsed_millis / 1000000.0f * m * n * k * 2;
-      printf(
-          "algorithm:%d, runtime (msec):%6.4f, throughput "
-          "(Gitems/sec):%5.2f\n",
-          i, elapsed_millis, throughput);
+      printf("algorithm:%d, runtime (msec):%6.4f, throughput "
+             "(Gitems/sec):%5.2f\n",
+             i, elapsed_millis, throughput);
     } else {
       printf("algorithm:%d returned error code:%d\n", i, error_code);
     }
@@ -157,61 +158,61 @@ void RunTest(int m, int k, int n, int transa, int transb) {
                     device_B_float, (transb ? k : n), device_A_float,
                     (transa ? m : k), &beta, device_C_float, n);
     if (result != 0) {
-        result_valid = false;
-        error_code = result;
-        break;
+      result_valid = false;
+      error_code = result;
+      break;
     }
   }
   gpu_timer.Stop();
   if (result_valid) {
-      elapsed_millis = gpu_timer.ElapsedMillis() / num_iter;
-      throughput = 1.0f / elapsed_millis / 1000000.0f * m * n * k * 2;
-      printf("runtime (msec):%6.4f, throughput (Gitems/sec):%5.2f\n",
-              elapsed_millis, throughput);
+    elapsed_millis = gpu_timer.ElapsedMillis() / num_iter;
+    throughput = 1.0f / elapsed_millis / 1000000.0f * m * n * k * 2;
+    printf("runtime (msec):%6.4f, throughput (Gitems/sec):%5.2f\n",
+           elapsed_millis, throughput);
   } else {
-      printf("cublasSgemm() returned error code:%d\n", error_code);
+    printf("cublasSgemm() returned error code:%d\n", error_code);
   }
   gpu_timer.Start();
   result_valid = false;
   error_code = 0;
   if (m == 1 && n > 1) {
-      printf("Using cublasSgemv():\n");
-      result_valid = true;
-      for (int i = 0; i < num_iter; ++i) {
-          auto result =
-              cublasSgemv(handle, (transb ? CUBLAS_OP_T : CUBLAS_OP_N),
-                      n, k, &alpha, device_B_float, (transb ? k : n),
-                      device_A_float, /*incx=*/1, &beta, device_C_float, /*incy=*/1);
-          if (result != 0) {
-              result_valid = false;
-              error_code = result;
-              break;
-          }
+    printf("Using cublasSgemv():\n");
+    result_valid = true;
+    for (int i = 0; i < num_iter; ++i) {
+      auto result =
+          cublasSgemv(handle, (transb ? CUBLAS_OP_T : CUBLAS_OP_N), n, k,
+                      &alpha, device_B_float, (transb ? k : n), device_A_float,
+                      /*incx=*/1, &beta, device_C_float, /*incy=*/1);
+      if (result != 0) {
+        result_valid = false;
+        error_code = result;
+        break;
       }
+    }
   }
   if (n == 1 && m > 1) {
-      printf("Using cublasSgemv():\n");
-      result_valid = true;
-      for (int i = 0; i < num_iter; ++i) {
-          auto result =
-              cublasSgemv(handle, (transa ? CUBLAS_OP_N : CUBLAS_OP_T),
-                      m, k, &alpha, device_A_float, (transa ? k : m),
-                      device_B_float, /*incx=*/1, &beta, device_C_float, /*incy=*/1);
-          if (result != 0) {
-              result_valid = false;
-              error_code = result;
-              break;
-          }
+    printf("Using cublasSgemv():\n");
+    result_valid = true;
+    for (int i = 0; i < num_iter; ++i) {
+      auto result =
+          cublasSgemv(handle, (transa ? CUBLAS_OP_N : CUBLAS_OP_T), m, k,
+                      &alpha, device_A_float, (transa ? k : m), device_B_float,
+                      /*incx=*/1, &beta, device_C_float, /*incy=*/1);
+      if (result != 0) {
+        result_valid = false;
+        error_code = result;
+        break;
       }
+    }
   }
   gpu_timer.Stop();
   if (result_valid) {
-      elapsed_millis = gpu_timer.ElapsedMillis() / num_iter;
-      throughput = 1.0f / elapsed_millis / 1000000.0f * m * n * k * 2;
-      printf("runtime (msec):%6.4f, throughput (Gitems/sec):%5.2f\n",
-              elapsed_millis, throughput);
+    elapsed_millis = gpu_timer.ElapsedMillis() / num_iter;
+    throughput = 1.0f / elapsed_millis / 1000000.0f * m * n * k * 2;
+    printf("runtime (msec):%6.4f, throughput (Gitems/sec):%5.2f\n",
+           elapsed_millis, throughput);
   } else if (error_code != 0) {
-      printf("cublasSgemv() returned error code:%d\n", error_code);
+    printf("cublasSgemv() returned error code:%d\n", error_code);
   }
 
   cudaFree(device_A_float);
